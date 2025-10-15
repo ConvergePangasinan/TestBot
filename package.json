@@ -1,0 +1,27 @@
+{
+  "name": "converge-autopost-bot",
+  "version": "3.4.0",
+  "description": "🚀 Converge AutoPost Bot Server with Google Sheets + Facebook Scheduler",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "ping": "node ping.js"
+  },
+  "dependencies": {
+    "axios": "^1.7.1",
+    "body-parser": "^1.20.3",
+    "cors": "^2.8.5",
+    "dotenv": "^16.4.5",
+    "express": "^4.19.2",
+    "google-auth-library": "^9.14.1",
+    "google-spreadsheet": "^4.1.2",
+    "moment-timezone": "^0.5.45",
+    "node-cron": "^3.0.3"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "author": "Edward John Paulo",
+  "license": "MIT"
+}

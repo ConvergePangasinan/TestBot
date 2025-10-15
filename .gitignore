@@ -1,0 +1,30 @@
+# ===============================================
+# 🧠 Converge AutoPost Bot - .gitignore (Root)
+# ===============================================
+
+# 🔐 Google service credentials
+credentials.json
+
+# 🔑 Environment variables
+.env
+
+# 📦 Node dependencies
+node_modules/
+
+# 🧱 Build or cache folders
+dist/
+build/
+.cache/
+*.log
+
+# 🧩 System or editor files
+.DS_Store
+Thumbs.db
+.vscode/
+.idea/
+*.swp
+
+# 💬 Debug / local test files
+test/
+temp/
+logs/
