@@ -1,6 +1,7 @@
 // ===============================================
 // 🕓 Scheduler - Converge AutoPost Bot
-// Version: v3.4.3 (Root + GOOGLE_CREDENTIALS)
+// Version: v3.5.0 (Stable + Safe JSON Parsing)
+// Author: Edward John Paulo
 // ===============================================
 
 import cron from "node-cron";
@@ -10,26 +11,41 @@ import { appendLog, logMessage } from "./logs.js";
 
 const SHEET_ID = process.env.SHEET_ID;
 
-// ✅ Load Google credentials from .env
+// ===============================================
+// 🔐 Load & Parse Google Service Credentials
+// ===============================================
 let serviceAccount;
+
 try {
-  if (!process.env.GOOGLE_CREDENTIALS) throw new Error("Missing GOOGLE_CREDENTIALS in .env");
-  serviceAccount = JSON.parse(process.env.GOOGLE_CREDENTIALS);
+  const credsRaw = process.env.GOOGLE_CREDENTIALS?.trim();
+  if (!credsRaw) throw new Error("Missing GOOGLE_CREDENTIALS in .env");
+
+  // 🧠 Clean and safely parse Render-style JSON
+  const cleanCreds = credsRaw
+    .replace(/\\n/g, "\\n")   // keep escaped newlines
+    .replace(/\r/g, "")       // remove carriage returns
+    .replace(/^\uFEFF/, "");  // remove invisible BOM if exists
+
+  serviceAccount = JSON.parse(cleanCreds);
   logMessage("✅ Scheduler loaded GOOGLE_CREDENTIALS successfully");
 } catch (err) {
-  logMessage("❌ Failed to parse GOOGLE_CREDENTIALS");
+  logMessage("❌ Failed to parse GOOGLE_CREDENTIALS: " + err.message);
   console.error(err);
   process.exit(1);
 }
 
-// ✅ Google Auth setup
+// ===============================================
+// 🔑 Google Auth Setup
+// ===============================================
 const serviceAuth = new JWT({
   email: serviceAccount.client_email,
   key: serviceAccount.private_key.replace(/\\n/g, "\n"),
   scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
 
-// Initialize Google Sheet connection
+// ===============================================
+// 📄 Connect to Google Sheet
+// ===============================================
 let doc;
 async function initSheet() {
   try {
@@ -42,34 +58,44 @@ async function initSheet() {
   }
 }
 
-// ✅ Example posting function
+// ===============================================
+// 🧠 Scheduled Task Function
+// ===============================================
 async function postScheduledTasks() {
   try {
+    if (!doc) await initSheet();
+
     const sheet = doc.sheetsByTitle["Posts"];
     if (!sheet) {
       logMessage("⚠️ 'Posts' sheet not found in Google Sheets");
       return;
     }
 
-    await sheet.loadCells();
-    logMessage("🔄 Scheduler checked for due posts");
+    const rows = await sheet.getRows();
+    const pendingRows = rows.filter(
+      (r) => (r.Status || "").toString().trim().toLowerCase() === "pending"
+    );
 
-    // Example log entry
+    logMessage(`📊 Scheduler found ${pendingRows.length} pending posts`);
+
+    // 📝 Example log entry
     await appendLog(doc, {
       timestamp: new Date().toISOString(),
       status: "Running",
-      message: "Scheduler executed successfully",
+      message: `Scheduler executed — ${pendingRows.length} pending posts checked.`,
     });
   } catch (err) {
     logMessage(`❌ Error running scheduled task: ${err.message}`);
   }
 }
 
-// ✅ Schedule recurring tasks
+// ===============================================
+// 🕓 Schedule All Tasks
+// ===============================================
 export function scheduleAllTasks() {
   initSheet();
 
-  // Runs every 15 minutes (you can change this)
+  // Runs every 15 minutes
   cron.schedule("*/15 * * * *", async () => {
     logMessage("🕓 Running scheduled post task...");
     await postScheduledTasks();
